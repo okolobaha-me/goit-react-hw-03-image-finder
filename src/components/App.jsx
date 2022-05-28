@@ -80,7 +80,6 @@ export class App extends Component {
         <ImageGallery
           imgList={imgList}
           toggleOpenModal={this.toggleOpenModal}
-          modalIsOpen={modalIsOpen}
         />
         {isLoading && <Loader />}
         {!!imgList.length && !isFinished && (
