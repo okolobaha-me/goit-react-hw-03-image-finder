@@ -9,7 +9,7 @@ export const Modal = ({ img, closeModal, alt }) => {
   });
 
   return (
-    <Overlay>
+    <Overlay onClick={closeModal}>
       <ModalImage src={`${img}`} alt={`${alt}`} />
     </Overlay>
   );

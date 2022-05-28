@@ -5,6 +5,9 @@ import { Component } from 'react';
 import { getPhotosByKey } from '../js/API';
 import { Notify } from 'notiflix';
 import { Loader } from './Loader/Loader';
+import { PER_PAGE } from '../js/global_const';
+import { Modal } from './Modal/Modal';
+import { createPortal } from 'react-dom';
 
 export class App extends Component {
   state = {
@@ -13,47 +16,53 @@ export class App extends Component {
     search: '',
     isLoading: false,
     isFinished: false,
+    modalIsOpen: false,
+    modalImage: ' ',
+  };
+
+  toggleOpenModal = photo => {
+    this.setState(prev => ({
+      modalIsOpen: !prev.modalIsOpen,
+      modalImage: photo,
+    }));
   };
 
   checkEndOfHits(list) {
-    if (list.length < 12) this.setState({ isFinished: true });
+    if (list.length < PER_PAGE) this.setState({ isFinished: true });
   }
 
-  handleSubmit = async search => {
-    if (!search.trim()) {
-      Notify.failure('Please enter something in search field');
-      return;
+  loadPhotos = async search => {
+    if (search) {
+      await this.setState({
+        imgList: [],
+        isFinished: false,
+        page: 1,
+      });
+
+      if (!search.trim()) {
+        Notify.failure('Please enter something in search field');
+        return;
+      }
+    } else {
+      search = this.state.search;
     }
 
-    this.setState({ imgList: [], isLoading: true, isFinished: false });
+    this.setState({ isLoading: true });
 
     try {
-      const items = await getPhotosByKey(search);
+      const items = await getPhotosByKey(search, this.state.page);
       this.checkEndOfHits(items);
 
       if (items.length === 0) {
         Notify.warning("Sorry we didn't find anything");
+        return;
       }
 
-      this.setState(prev => ({ imgList: items, search, page: prev.page + 1 }));
-    } catch (err) {
-      Notify.failure('Oops!! Something goes wrong please try again');
-    } finally {
-      this.setState({ isLoading: false });
-    }
-  };
-
-  loadMore = async () => {
-    this.setState({ isLoading: true });
-
-    try {
-      const newItems = await getPhotosByKey(this.state.search, this.state.page);
-      this.checkEndOfHits(newItems);
-
       this.setState(prev => ({
-        imgList: [...prev.imgList, ...newItems],
-        page: prev.page + 1,
+        imgList: [...prev.imgList, ...items],
+        search,
       }));
+      this.setState(prev => ({ page: prev.page + 1 }));
     } catch (err) {
       Notify.failure('Oops!! Something goes wrong please try again');
     } finally {
@@ -62,14 +71,35 @@ export class App extends Component {
   };
 
   render() {
-    const { isLoading, imgList, isFinished } = this.state;
+    const { isLoading, imgList, isFinished, modalIsOpen, modalImage } =
+      this.state;
 
     return (
       <>
-        <Searchbar onSubmit={this.handleSubmit} />
-        <ImageGallery imgList={imgList} />
+        <Searchbar onSubmit={this.loadPhotos} />
+        <ImageGallery
+          imgList={imgList}
+          toggleOpenModal={this.toggleOpenModal}
+          modalIsOpen={modalIsOpen}
+        />
         {isLoading && <Loader />}
-        {imgList.length && !isFinished && <Button loadMore={this.loadMore} />}
+        {!!imgList.length && !isFinished && (
+          <Button
+            loadMore={() => {
+              this.loadPhotos();
+            }}
+          />
+        )}
+
+        {modalIsOpen &&
+          createPortal(
+            <Modal
+              img={modalImage}
+              alt={'asdasd'}
+              closeModal={this.toggleOpenModal}
+            />,
+            document.getElementById('modal-root')
+          )}
       </>
     );
   }
