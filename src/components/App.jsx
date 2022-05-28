@@ -21,6 +21,7 @@ export class App extends Component {
   };
 
   toggleOpenModal = photo => {
+    console.log('asdasd');
     this.setState(prev => ({
       modalIsOpen: !prev.modalIsOpen,
       modalImage: photo,

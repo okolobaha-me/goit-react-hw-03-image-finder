@@ -1,19 +1,26 @@
 import { ModalImage, Overlay } from './Modal.styled';
 import PropTypes from 'prop-types';
-import { useEffect } from 'react';
+import { Component } from 'react';
 
-export const Modal = ({ img, closeModal, alt }) => {
-  useEffect(() => {
-    document.addEventListener('keydown', closeModal);
-    return () => document.removeEventListener('keydown', closeModal);
-  });
+export class Modal extends Component {
+  componentDidMount() {
+    document.addEventListener('keydown', this.props.closeModal);
+  }
 
-  return (
-    <Overlay onClick={closeModal}>
-      <ModalImage src={`${img}`} alt={`${alt}`} />
-    </Overlay>
-  );
-};
+  componentWillUnmount() {
+    document.removeEventListener('keydown', this.props.closeModal);
+  }
+
+  render() {
+    const { closeModal, alt, img } = this.props;
+
+    return (
+      <Overlay onClick={closeModal}>
+        <ModalImage src={`${img}`} alt={`${alt}`} />
+      </Overlay>
+    );
+  }
+}
 
 Modal.propTypes = {
   img: PropTypes.string.isRequired,
